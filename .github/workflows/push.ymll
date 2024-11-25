@@ -1,0 +1,75 @@
+name: test-actions
+on: push
+env:
+  GOPRIVATE: "*github.com/*"
+  TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags')
+    steps:
+    - name: Configure git UserName
+      run: git config --global user.name "HassanAbdelzaher"
+      
+    - name: Configure git for Email
+      run: git config --global user.email hasnmhmd77@gmail.com
+      
+    - name: Configure git for private modules
+      env:
+       TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
+      run: git config --global url."https://HassanAbdelzaher:${{env.TOKEN}}@github.com".insteadOf "https://github.com"
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18
+        GOPRIVATE: "*github.com/*"
+        
+    - uses: actions/checkout@v2
+    - name: Run Unit Tests
+      run: go test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: startsWith(github.ref, 'refs/tags')
+    steps:
+      - name: Extract Version
+        id: version_step
+        run: |
+          echo "##[set-output name=version;]VERSION=${GITHUB_REF#$"refs/tags/v"}"
+          echo "##[set-output name=version_tag;]MASSOFT/Go-Oauth-SERVICE:${GITHUB_REF#$"refs/tags/v"}"
+          echo "##[set-output name=latest_tag;]MASSOFT/Go-Oauth-SERVICE:latest"
+          echo "##[set-output name=token;]TOKEN=${{secrets.GIT_ACCESS_TOKEN}}"
+      - name: Print Version
+        run: |
+          echo ${{steps.version_step.outputs.version_tag}}
+          echo ${{steps.version_step.outputs.latest_tag}}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: PrepareReg Names
+        id: read-docker-image-identifiers
+        run: |
+          echo VERSION_TAG=$(echo ${{ steps.version_step.outputs.version_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+          echo LASTEST_TAG=$(echo ${{ steps.version_step.outputs.latest_tag  }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: |
+            ${{env.VERSION_TAG}}
+            ${{env.LASTEST_TAG}}
+          build-args: |
+            ${{steps.version_step.outputs.version}}
+            ${{steps.version_step.outputs.token}}

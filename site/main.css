@@ -1,0 +1,38 @@
+body {
+  font-family: "Rubik", sans-serif;
+}
+.hero-section {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4)),
+    url("./images/hero-bg2.webp");
+  background-size: cover;
+  background-position: 90% 40%;
+  background-repeat: no-repeat;
+}
+
+.owl-theme .owl-nav {
+  display: none;
+}
+.owl-theme .owl-dots {
+  display: none;
+}
+.service-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.service-card:hover {
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+}
+
+.service-card-1 {
+  background-image: url("./images/service-2.webp");
+}
+.service-card-2 {
+  background-image: url("./images/service-3.webp");
+}
+
+.service-card-3 {
+  background-image: url("./images/service-1.webp");
+}
